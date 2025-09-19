@@ -16,7 +16,8 @@ Sistema completo para gestão de administradoras de consórcio, desenvolvido com
 
 ### 2.1 Tecnologias Core
 - **.NET 8**: Framework principal para desenvolvimento backend
-- **Next.js 14+**: Framework React para frontend
+- **Next.js 14+**: Framework React para frontend administrativo
+- **React Native/Flutter**: Framework para app mobile
 - **PostgreSQL 15+**: Banco de dados principal
 - **Redis 7+**: Cache, sessões e locks distribuídos
 - **RabbitMQ 3.12+**: Message broker para comunicação assíncrona
@@ -43,12 +44,18 @@ Sistema completo para gestão de administradoras de consórcio, desenvolvido com
 - **Shared State**: Estado global compartilhado entre microfrontends
 
 #### 3.1.2 Estrutura Simplificada para 2 Desenvolvedores
-- **Shell App**: Aplicação principal (host)
+- **Shell App**: Aplicação principal administrativa (host)
+- **Portal Consorciado**: Aplicação web para consorciados
+- **App Mobile**: Aplicativo mobile para consorciados
 - **Gestão MF**: Microfrontend unificado para Consorciados + Grupos
 - **Financeiro MF**: Microfrontend para módulo financeiro + Relatórios
 - **Operações MF**: Microfrontend para Sorteios + Documentos + Notificações
 
-**Justificativa**: Com apenas 2 desenvolvedores, reduzimos de 7 para 3 microfrontends para:
+**Justificativa**: Com apenas 2 desenvolvedores, temos 3 aplicações principais + 3 microfrontends:
+- **Portal Consorciado**: Interface completa para consorciados
+- **App Mobile**: Aplicativo nativo para consorciados
+- **Shell App**: Interface administrativa
+- **3 Microfrontends**: Para funcionalidades administrativas
 - **Menor complexidade** de gerenciamento
 - **Desenvolvimento mais ágil** com menos context switching
 - **Deploy simplificado** com menos aplicações
@@ -92,6 +99,32 @@ Sistema completo para gestão de administradoras de consórcio, desenvolvido com
 - **Integração Bacen**: Interface para arquivos SAG, CAGED, RAIS
 - **Consultas externas**: CND, SPC, Receita Federal
 - **Auditoria**: Logs de sorteios, documentos e integrações Bacen
+
+##### Portal Consorciado (Web)
+- **Login/Autenticação**: Acesso seguro do consorciado
+- **Dashboard pessoal**: Visão geral das cotas
+- **Gestão de cotas**: Visualização e controle das cotas
+- **Emissão de boletos**: Mensal, antecipação, quitação, avulso
+- **Oferta de lances**: Sistema completo de lances
+- **Extrato da cota**: Histórico financeiro detalhado
+- **Extrato IR**: Relatório para declaração de IR
+- **Acompanhamento de assembleias**: Resultados e participação
+- **Alteração de bem**: Quando não contemplado
+- **Notificações**: Centro de notificações pessoais
+- **Documentos**: Download de contratos e comprovantes
+- **Suporte**: Chat e tickets de suporte
+
+##### App Mobile (React Native/Flutter)
+- **Login biométrico**: Autenticação por biometria
+- **Dashboard mobile**: Interface otimizada para mobile
+- **Notificações push**: Alertas em tempo real
+- **Emissão de boletos**: Geração e pagamento via PIX
+- **Oferta de lances**: Sistema de lances mobile
+- **Extrato simplificado**: Visualização rápida
+- **Câmera**: Upload de documentos via foto
+- **Offline**: Funcionalidades básicas offline
+- **Biometria**: Autenticação por impressão digital
+- **QR Code**: Pagamento via QR Code
 
 #### 3.1.4 Arquitetura de Microfrontend
 
@@ -475,6 +508,36 @@ export default function FinanceiroPage() {
   - Controle de retry e reprocessamento
   - Auditoria de integrações
 
+#### 3.2.11 Serviço de Portal Consorciado
+- **Tecnologia**: .NET 8 + gRPC Server + Next.js
+- **Responsabilidades**:
+  - Autenticação e autorização de consorciados
+  - Gestão de cotas e participações
+  - Emissão de boletos (mensal, antecipação, quitação, avulso)
+  - Sistema de oferta de lances
+  - Geração de extratos (cota e IR)
+  - Acompanhamento de assembleias
+  - Alteração de bem (não contemplados)
+  - Notificações personalizadas
+  - Upload/download de documentos
+  - Chat de suporte
+  - Integração com gateway de pagamento
+  - Geração de PIX e QR Codes
+
+#### 3.2.12 Serviço de App Mobile
+- **Tecnologia**: .NET 8 + gRPC Server + React Native/Flutter
+- **Responsabilidades**:
+  - API específica para mobile
+  - Autenticação biométrica
+  - Notificações push
+  - Pagamentos via PIX/QR Code
+  - Upload de documentos via câmera
+  - Funcionalidades offline
+  - Sincronização de dados
+  - Integração com biometria nativa
+  - Cache local de dados
+  - Geolocalização para assembleias
+
 ### 3.3 Serviços de Apoio
 
 #### 3.3.1 Serviço de Auditoria
@@ -655,6 +718,36 @@ export const useNotifications = () => {
 - HistoricoEnvio
 ```
 
+#### 5.2.6 Banco de Portal Consorciado
+```sql
+-- Tabelas principais
+- ConsorciadosPortal
+- CotasConsorciado
+- BoletosConsorciado
+- LancesConsorciado
+- ExtratosConsorciado
+- AssembleiasConsorciado
+- AlteracoesBem
+- NotificacoesConsorciado
+- DocumentosConsorciado
+- TicketsSuporte
+- SessoesConsorciado
+- PagamentosConsorciado
+```
+
+#### 5.2.7 Banco de App Mobile
+```sql
+-- Tabelas principais
+- DispositivosMobile
+- TokensPush
+- CacheMobile
+- SincronizacaoMobile
+- BiometriaMobile
+- GeolocalizacaoMobile
+- ConfiguracoesMobile
+- LogsMobile
+```
+
 ### 5.3 Redis - Cache e Locks Distribuídos
 
 #### 5.3.1 Estrutura de Cache
@@ -735,6 +828,10 @@ public class DistributedLockService
 - **Relatórios**: Evitar geração simultânea de relatórios pesados
 - **Integração Bacen**: Evitar geração simultânea de arquivos Bacen
 - **Envio de Arquivos**: Garantir envio único de arquivos para Bacen
+- **Portal Consorciado**: Evitar sessões duplicadas
+- **App Mobile**: Controle de sincronização
+- **Boletos**: Evitar geração duplicada de boletos
+- **Lances Mobile**: Processar lances de forma sequencial
 
 ## 6. Comunicação entre Serviços
 
@@ -752,6 +849,8 @@ public class DistributedLockService
 - **Grupo Service**: Gestão de grupos e regras
 - **Sorteio Service**: Processamento de sorteios e lances
 - **Bacen Service**: Integrações com Bacen e geração de arquivos
+- **Portal Service**: Funcionalidades do portal do consorciado
+- **Mobile Service**: APIs específicas para app mobile
 - **Auditoria Service**: Logging e rastreabilidade
 
 #### 6.2.2 Definições de Serviços gRPC
@@ -793,6 +892,33 @@ service BacenService {
   rpc ValidarArquivo(ValidarArquivoRequest) returns (ValidacaoResponse);
   rpc ReprocessarArquivo(ReprocessarArquivoRequest) returns (ReprocessamentoResponse);
 }
+
+// PortalService.proto
+service PortalService {
+  rpc AutenticarConsorciado(AutenticarRequest) returns (AutenticacaoResponse);
+  rpc BuscarCotasConsorciado(BuscarCotasRequest) returns (CotasResponse);
+  rpc GerarBoleto(GerarBoletoRequest) returns (BoletoResponse);
+  rpc OferecerLance(OferecerLanceRequest) returns (LanceResponse);
+  rpc GerarExtrato(ExtratoRequest) returns (ExtratoResponse);
+  rpc GerarExtratoIR(ExtratoIRRequest) returns (ExtratoIRResponse);
+  rpc BuscarAssembleias(BuscarAssembleiasRequest) returns (AssembleiasResponse);
+  rpc AlterarBem(AlterarBemRequest) returns (AlteracaoResponse);
+  rpc EnviarNotificacao(NotificacaoRequest) returns (NotificacaoResponse);
+  rpc UploadDocumento(UploadRequest) returns (UploadResponse);
+  rpc CriarTicketSuporte(TicketRequest) returns (TicketResponse);
+}
+
+// MobileService.proto
+service MobileService {
+  rpc AutenticarBiometrico(BiometricoRequest) returns (AutenticacaoResponse);
+  rpc RegistrarDispositivo(DispositivoRequest) returns (RegistroResponse);
+  rpc EnviarNotificacaoPush(PushRequest) returns (PushResponse);
+  rpc SincronizarDados(SincronizacaoRequest) returns (SincronizacaoResponse);
+  rpc PagarViaPIX(PIXRequest) returns (PIXResponse);
+  rpc GerarQRCode(QRCodeRequest) returns (QRCodeResponse);
+  rpc UploadFoto(FotoRequest) returns (FotoResponse);
+  rpc BuscarGeolocalizacao(GeoRequest) returns (GeoResponse);
+}
 ```
 
 #### 6.2.3 Vantagens do gRPC
@@ -817,6 +943,18 @@ service BacenService {
 - CNDConsultada
 - SPCConsultado
 - ReceitaConsultada
+- ConsorciadoLogado
+- BoletoGerado
+- LanceOferecido
+- ExtratoGerado
+- AssembleiaRealizada
+- BemAlterado
+- NotificacaoEnviada
+- TicketCriado
+- DispositivoRegistrado
+- PushEnviado
+- PIXPago
+- FotoUploadada
 ```
 
 ### 6.4 Message Queues (RabbitMQ)
@@ -824,6 +962,8 @@ service BacenService {
 - **financeiro.queue**: Eventos financeiros
 - **sorteio.queue**: Eventos de sorteios
 - **bacen.queue**: Eventos de integração Bacen
+- **portal.queue**: Eventos do portal do consorciado
+- **mobile.queue**: Eventos do app mobile
 - **notificacao.queue**: Eventos de notificação
 - **auditoria.queue**: Eventos de auditoria
 
@@ -1420,16 +1560,18 @@ deploy:
 - Compliance completo
 - Locks distribuídos avançados
 
-### 15.4 Fase 4 - Microfrontend Simplificado (2 meses)
+### 15.4 Fase 4 - Portal Consorciado e Microfrontend (2 meses)
 - Desenvolvimento do Shell App (aplicação principal)
+- Desenvolvimento do Portal Consorciado (web)
 - Criação do Design System compartilhado
 - Desenvolvimento do Gestão MF (Consorciados + Grupos)
 - Desenvolvimento do Financeiro MF (Financeiro + Relatórios)
 - Configuração do Module Federation
 - Integração com APIs backend
-- Deploy dos microfrontends
+- Deploy dos microfrontends e portal
 
-### 15.5 Fase 5 - Operações e Integração Bacen (2 meses)
+### 15.5 Fase 5 - App Mobile e Integração Bacen (2 meses)
+- Desenvolvimento do App Mobile (React Native/Flutter)
 - Desenvolvimento do Operações MF (Sorteios + Documentos + Notificações + Bacen)
 - Implementação do Serviço de Integração Bacen
 - Desenvolvimento de todas as integrações obrigatórias com Bacen
@@ -1437,28 +1579,41 @@ deploy:
 - Integração com APIs externas (CND, SPC, Receita Federal)
 - Implementação de retry e reprocessamento
 - Testes de integração com Bacen
-- Otimização de performance dos microfrontends
+- Deploy do app mobile nas stores
 - CI/CD simplificado
 
-### 15.6 Estratégia de Desenvolvimento para 2 Desenvolvedores
+### 15.6 Fase 6 - Otimização e Finalização (1 mês)
+- Otimização de performance de todas as aplicações
+- Implementação de funcionalidades offline no mobile
+- Testes de integração completos
+- Monitoramento e alertas
+- Documentação final
+- Treinamento dos usuários
+
+### 15.7 Estratégia de Desenvolvimento para 2 Desenvolvedores
 
 #### Desenvolvedor 1 - Backend + Shell App + Integração Bacen
 - **Responsabilidades**:
   - Desenvolvimento completo do backend (.NET + gRPC)
   - Serviço de Integração Bacen
+  - Serviço de Portal Consorciado
+  - Serviço de App Mobile
   - Configuração do Shell App
   - Design System compartilhado
   - Infraestrutura e deploy
   - Integração entre frontend e backend
   - Implementação de todas as integrações com Bacen
 
-#### Desenvolvedor 2 - Frontend + Microfrontends
+#### Desenvolvedor 2 - Frontend + Portal + App Mobile
 - **Responsabilidades**:
   - Desenvolvimento dos 3 microfrontends
+  - Desenvolvimento do Portal Consorciado (web)
+  - Desenvolvimento do App Mobile (React Native/Flutter)
   - Interface de integração Bacen no Operações MF
   - Componentes de UI específicos
   - Integração com APIs
   - Testes de integração frontend
+  - Deploy do app mobile nas stores
   - Otimização de performance
 
 #### Cronograma Semanal
