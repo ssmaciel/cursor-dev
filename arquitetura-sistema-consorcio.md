@@ -32,64 +32,226 @@ Sistema completo para gestão de administradoras de consórcio, desenvolvido com
 
 ## 3. Arquitetura do Sistema
 
-### 3.1 Frontend - Next.js
+### 3.1 Frontend - Microfrontend com Next.js
 
-#### 3.1.1 Estrutura do Frontend
-- **Next.js 14+**: Framework React com App Router
-- **TypeScript**: Tipagem estática
-- **Tailwind CSS**: Framework CSS utilitário
-- **Shadcn/ui**: Componentes de UI
-- **React Query/TanStack Query**: Gerenciamento de estado servidor
-- **Zustand**: Gerenciamento de estado cliente
-- **React Hook Form**: Gerenciamento de formulários
-- **Zod**: Validação de schemas
+#### 3.1.1 Arquitetura de Microfrontend
+- **Shell App**: Aplicação principal que orquestra os microfrontends
+- **Module Federation**: Compartilhamento de módulos entre aplicações
+- **Next.js 14+**: Framework base para cada microfrontend
+- **TypeScript**: Tipagem estática compartilhada
+- **Design System**: Componentes UI compartilhados
+- **Shared State**: Estado global compartilhado entre microfrontends
 
-#### 3.1.2 Funcionalidades do Frontend
-- **Dashboard Administrativo**: Visão geral do sistema
-- **Gestão de Consorciados**: CRUD completo
-- **Gestão de Grupos**: Configuração e monitoramento
-- **Módulo Financeiro**: Controle de pagamentos e inadimplência
-- **Sorteios e Lances**: Interface para sorteios
-- **Relatórios**: Dashboards e exportação
-- **Documentos**: Upload e gerenciamento
-- **Notificações**: Centro de notificações em tempo real
+#### 3.1.2 Estrutura de Microfrontends
+- **Shell App**: Aplicação principal (host)
+- **Consorciados MF**: Microfrontend para gestão de consorciados
+- **Grupos MF**: Microfrontend para gestão de grupos
+- **Financeiro MF**: Microfrontend para módulo financeiro
+- **Sorteios MF**: Microfrontend para sorteios e lances
+- **Relatórios MF**: Microfrontend para relatórios e dashboards
+- **Documentos MF**: Microfrontend para gestão de documentos
+- **Notificações MF**: Microfrontend para centro de notificações
 
-#### 3.1.3 Arquitetura do Frontend
+#### 3.1.3 Funcionalidades por Microfrontend
+
+##### Shell App (Host)
+- **Navegação principal**: Menu e roteamento
+- **Layout base**: Header, sidebar, footer
+- **Autenticação**: Login e controle de acesso
+- **Loading states**: Estados de carregamento
+- **Error boundaries**: Tratamento de erros
+
+##### Consorciados MF
+- **CRUD de consorciados**: Cadastro, edição, exclusão
+- **Listagem e filtros**: Busca e paginação
+- **Validação de dados**: Formulários com validação
+- **Histórico**: Participações e movimentações
+
+##### Grupos MF
+- **Gestão de grupos**: Criação e configuração
+- **Cronogramas**: Definição de pagamentos
+- **Vagas**: Controle de participantes
+- **Regras**: Configuração de regras do grupo
+
+##### Financeiro MF
+- **Mensalidades**: Controle de pagamentos
+- **Inadimplência**: Gestão de atrasos
+- **Relatórios financeiros**: Dashboards específicos
+- **Integração bancária**: APIs de pagamento
+
+##### Sorteios MF
+- **Execução de sorteios**: Interface para sorteios
+- **Gestão de lances**: Processamento de lances
+- **Contemplações**: Processo de contemplação
+- **Auditoria**: Logs de sorteios
+
+##### Relatórios MF
+- **Dashboards**: Gráficos e métricas
+- **Exportação**: PDF, Excel, CSV
+- **Filtros avançados**: Consultas complexas
+- **Agendamento**: Relatórios automáticos
+
+##### Documentos MF
+- **Upload/Download**: Gestão de arquivos
+- **Versionamento**: Controle de versões
+- **Assinatura digital**: Integração com certificados
+- **Compliance**: Auditoria de documentos
+
+##### Notificações MF
+- **Centro de notificações**: Lista de notificações
+- **Configurações**: Preferências do usuário
+- **Templates**: Criação de templates
+- **Histórico**: Log de envios
+
+#### 3.1.4 Arquitetura de Microfrontend
+
+##### Shell App (Host)
 ```typescript
-// Estrutura de pastas Next.js
-src/
-├── app/                    // App Router (Next.js 13+)
-│   ├── (auth)/            // Grupo de rotas de autenticação
-│   ├── dashboard/         // Dashboard principal
-│   ├── consorciados/      // Módulo de consorciados
-│   ├── grupos/           // Módulo de grupos
-│   ├── financeiro/       // Módulo financeiro
-│   ├── sorteios/         // Módulo de sorteios
-│   └── relatorios/       // Módulo de relatórios
-├── components/            // Componentes reutilizáveis
-│   ├── ui/               // Componentes base (Shadcn)
-│   ├── forms/            // Componentes de formulário
-│   ├── charts/           // Componentes de gráficos
-│   └── layout/           // Componentes de layout
-├── lib/                  // Utilitários e configurações
-│   ├── api/              // Clientes de API
-│   ├── auth/             // Configuração de autenticação
-│   ├── utils/            // Funções utilitárias
-│   └── validations/      // Schemas de validação
-├── hooks/                // Custom hooks
-├── stores/               // Stores Zustand
-└── types/                // Definições TypeScript
+// Estrutura do Shell App
+apps/shell/
+├── src/
+│   ├── app/                    // App Router
+│   │   ├── (auth)/            // Autenticação
+│   │   ├── dashboard/         // Dashboard principal
+│   │   └── layout.tsx         // Layout base
+│   ├── components/            // Componentes compartilhados
+│   │   ├── layout/           // Header, Sidebar, Footer
+│   │   ├── navigation/       // Menu de navegação
+│   │   └── error-boundary/   // Error boundaries
+│   ├── lib/                  // Configurações compartilhadas
+│   │   ├── module-federation/ // Config MF
+│   │   ├── auth/             // Autenticação
+│   │   └── shared-state/     // Estado global
+│   └── types/                // Tipos compartilhados
+├── next.config.js            // Configuração Next.js + MF
+└── package.json
 ```
 
-#### 3.1.4 Integração com Backend
+##### Microfrontend Individual
 ```typescript
-// Exemplo de cliente API
+// Estrutura de um microfrontend (ex: consorciados)
+apps/consorciados-mf/
+├── src/
+│   ├── app/                    // App Router
+│   │   ├── page.tsx           // Página principal
+│   │   ├── [id]/              // Páginas dinâmicas
+│   │   └── loading.tsx        // Loading states
+│   ├── components/            // Componentes específicos
+│   │   ├── forms/            // Formulários
+│   │   ├── tables/           // Tabelas
+│   │   └── modals/           // Modais
+│   ├── hooks/                // Hooks específicos
+│   ├── lib/                  // Lógica de negócio
+│   └── types/                // Tipos específicos
+├── next.config.js            // Configuração MF
+└── package.json
+```
+
+##### Design System Compartilhado
+```typescript
+// Estrutura do Design System
+packages/design-system/
+├── src/
+│   ├── components/            // Componentes base
+│   │   ├── ui/               // Shadcn/ui
+│   │   ├── forms/            // Formulários
+│   │   ├── charts/           // Gráficos
+│   │   └── layout/           // Layout components
+│   ├── hooks/                // Hooks compartilhados
+│   ├── utils/                // Utilitários
+│   ├── styles/               // Estilos globais
+│   └── types/                // Tipos compartilhados
+├── package.json
+└── tsconfig.json
+```
+
+#### 3.1.5 Module Federation Configuration
+
+##### Shell App (Host) - next.config.js
+```javascript
+const { NextFederationPlugin } = require('@module-federation/nextjs-mf');
+
+module.exports = {
+  webpack(config, options) {
+    config.plugins.push(
+      new NextFederationPlugin({
+        name: 'shell',
+        remotes: {
+          consorciados: 'consorciados@http://localhost:3001/_next/static/chunks/remoteEntry.js',
+          grupos: 'grupos@http://localhost:3002/_next/static/chunks/remoteEntry.js',
+          financeiro: 'financeiro@http://localhost:3003/_next/static/chunks/remoteEntry.js',
+          sorteios: 'sorteios@http://localhost:3004/_next/static/chunks/remoteEntry.js',
+          relatorios: 'relatorios@http://localhost:3005/_next/static/chunks/remoteEntry.js',
+          documentos: 'documentos@http://localhost:3006/_next/static/chunks/remoteEntry.js',
+          notificacoes: 'notificacoes@http://localhost:3007/_next/static/chunks/remoteEntry.js',
+        },
+        shared: {
+          react: { singleton: true },
+          'react-dom': { singleton: true },
+          'next': { singleton: true },
+          '@tanstack/react-query': { singleton: true },
+          'zustand': { singleton: true },
+        },
+      })
+    );
+    return config;
+  },
+};
+```
+
+##### Microfrontend (Remote) - next.config.js
+```javascript
+const { NextFederationPlugin } = require('@module-federation/nextjs-mf');
+
+module.exports = {
+  webpack(config, options) {
+    config.plugins.push(
+      new NextFederationPlugin({
+        name: 'consorciados',
+        filename: 'static/chunks/remoteEntry.js',
+        exposes: {
+          './ConsorciadosPage': './src/app/page.tsx',
+          './ConsorciadosForm': './src/components/forms/ConsorciadosForm.tsx',
+          './ConsorciadosTable': './src/components/tables/ConsorciadosTable.tsx',
+        },
+        shared: {
+          react: { singleton: true },
+          'react-dom': { singleton: true },
+          'next': { singleton: true },
+          '@tanstack/react-query': { singleton: true },
+          'zustand': { singleton: true },
+        },
+      })
+    );
+    return config;
+  },
+};
+```
+
+#### 3.1.6 Integração com Backend
+
+##### Cliente API Compartilhado
+```typescript
+// packages/shared-api/src/trpc.ts
 import { createTRPCReact } from '@trpc/react-query';
 import type { AppRouter } from '../server/routers';
 
 export const trpc = createTRPCReact<AppRouter>();
 
-// Exemplo de hook para consorciados
+// Configuração compartilhada
+export const trpcClient = trpc.createClient({
+  url: process.env.NEXT_PUBLIC_API_URL + '/trpc',
+  headers() {
+    return {
+      authorization: `Bearer ${getToken()}`,
+    };
+  },
+});
+```
+
+##### Hook Compartilhado para Consorciados
+```typescript
+// packages/shared-api/src/hooks/useConsorciados.ts
 export const useConsorciados = () => {
   return trpc.consorciados.list.useQuery({
     page: 1,
@@ -98,7 +260,6 @@ export const useConsorciados = () => {
   });
 };
 
-// Exemplo de mutação
 export const useCreateConsorciado = () => {
   const utils = trpc.useUtils();
   
@@ -108,6 +269,86 @@ export const useCreateConsorciado = () => {
     }
   });
 };
+```
+
+##### Estado Global Compartilhado
+```typescript
+// packages/shared-state/src/authStore.ts
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+interface AuthState {
+  user: User | null;
+  token: string | null;
+  login: (user: User, token: string) => void;
+  logout: () => void;
+  isAuthenticated: boolean;
+}
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      token: null,
+      isAuthenticated: false,
+      login: (user, token) => set({ user, token, isAuthenticated: true }),
+      logout: () => set({ user: null, token: null, isAuthenticated: false }),
+    }),
+    {
+      name: 'auth-storage',
+    }
+  )
+);
+```
+
+##### Componente de Carregamento Dinâmico
+```typescript
+// apps/shell/src/components/DynamicMicrofrontend.tsx
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
+
+interface DynamicMicrofrontendProps {
+  microfrontend: string;
+  component: string;
+  fallback?: React.ReactNode;
+}
+
+const DynamicMicrofrontend = ({ 
+  microfrontend, 
+  component, 
+  fallback = <div>Carregando...</div> 
+}: DynamicMicrofrontendProps) => {
+  const DynamicComponent = dynamic(
+    () => import(`${microfrontend}/${component}`),
+    {
+      ssr: false,
+      loading: () => fallback,
+    }
+  );
+
+  return (
+    <Suspense fallback={fallback}>
+      <DynamicComponent />
+    </Suspense>
+  );
+};
+
+export default DynamicMicrofrontend;
+```
+
+##### Uso no Shell App
+```typescript
+// apps/shell/src/app/consorciados/page.tsx
+import DynamicMicrofrontend from '@/components/DynamicMicrofrontend';
+
+export default function ConsorciadosPage() {
+  return (
+    <DynamicMicrofrontend
+      microfrontend="consorciados"
+      component="./ConsorciadosPage"
+    />
+  );
+}
 ```
 
 ### 3.2 Backend - Microserviços
@@ -523,22 +764,24 @@ service SorteioService {
 - **Docker**: Containerização para qualquer ambiente
 
 ### 7.2 Deploy no Kubernetes
+
+#### 7.2.1 Shell App (Host)
 ```yaml
-# Deployment do Frontend Next.js
+# Deployment do Shell App
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: consorcio-frontend
+  name: consorcio-shell
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: consorcio-frontend
+      app: consorcio-shell
   template:
     spec:
       containers:
-      - name: frontend
-        image: consorcio/frontend:latest
+      - name: shell
+        image: consorcio/shell:latest
         ports:
         - containerPort: 3000
         env:
@@ -553,23 +796,108 @@ spec:
               key: secret
         - name: NEXTAUTH_URL
           value: "https://app.consorcio.com"
+        - name: MICROFRONTEND_URLS
+          value: '{"consorciados":"https://consorciados.consorcio.com","grupos":"https://grupos.consorcio.com"}'
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: consorcio-frontend
+  name: consorcio-shell
 spec:
   selector:
-    app: consorcio-frontend
+    app: consorcio-shell
   ports:
   - port: 3000
     targetPort: 3000
   type: ClusterIP
 ```
 
+#### 7.2.2 Microfrontend Individual
+```yaml
+# Deployment do Microfrontend Consorciados
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consorcio-consorciados-mf
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: consorcio-consorciados-mf
+  template:
+    spec:
+      containers:
+      - name: consorciados-mf
+        image: consorcio/consorciados-mf:latest
+        ports:
+        - containerPort: 3001
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "https://api.consorcio.com"
+        - name: NODE_ENV
+          value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consorcio-consorciados-mf
+spec:
+  selector:
+    app: consorcio-consorciados-mf
+  ports:
+  - port: 3001
+    targetPort: 3001
+  type: ClusterIP
+```
+
+#### 7.2.3 Ingress para Microfrontends
+```yaml
+# Ingress para Microfrontends
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: consorcio-microfrontends
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: app.consorcio.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: consorcio-shell
+            port:
+              number: 3000
+  - host: consorciados.consorcio.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: consorcio-consorciados-mf
+            port:
+              number: 3001
+  - host: grupos.consorcio.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: consorcio-grupos-mf
+            port:
+              number: 3002
+```
+
 ### 7.3 Build e Otimização
+
+#### 7.3.1 Dockerfile para Shell App
 ```dockerfile
-# Dockerfile para Next.js
+# Dockerfile para Shell App
 FROM node:18-alpine AS base
 
 # Install dependencies only when needed
@@ -577,7 +905,12 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
+# Copy package files
 COPY package.json package-lock.json ./
+COPY packages/shared-api/package.json ./packages/shared-api/
+COPY packages/shared-state/package.json ./packages/shared-state/
+COPY packages/design-system/package.json ./packages/design-system/
+
 RUN npm ci --only=production
 
 # Rebuild the source code only when needed
@@ -587,9 +920,9 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED 1
-RUN npm run build
+RUN npm run build:shell
 
-# Production image, copy all the files and run next
+# Production image
 FROM base AS runner
 WORKDIR /app
 
@@ -599,18 +932,89 @@ ENV NEXT_TELEMETRY_DISABLED 1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/apps/shell/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/shell/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/shell/.next/static ./.next/static
 
 USER nextjs
 
 EXPOSE 3000
-
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
 CMD ["node", "server.js"]
+```
+
+#### 7.3.2 Dockerfile para Microfrontend
+```dockerfile
+# Dockerfile para Microfrontend
+FROM node:18-alpine AS base
+
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json ./
+COPY packages/shared-api/package.json ./packages/shared-api/
+COPY packages/design-system/package.json ./packages/design-system/
+
+RUN npm ci --only=production
+
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+
+ENV NEXT_TELEMETRY_DISABLED 1
+RUN npm run build:consorciados-mf
+
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV production
+ENV NEXT_TELEMETRY_DISABLED 1
+
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+COPY --from=builder /app/apps/consorciados-mf/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/consorciados-mf/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/consorciados-mf/.next/static ./.next/static
+
+USER nextjs
+
+EXPOSE 3001
+ENV PORT 3001
+ENV HOSTNAME "0.0.0.0"
+
+CMD ["node", "server.js"]
+```
+
+#### 7.3.3 Monorepo com Lerna/Nx
+```json
+// package.json (root)
+{
+  "name": "consorcio-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build:shell": "cd apps/shell && npm run build",
+    "build:consorciados-mf": "cd apps/consorciados-mf && npm run build",
+    "build:grupos-mf": "cd apps/grupos-mf && npm run build",
+    "build:all": "npm run build:shell && npm run build:consorciados-mf && npm run build:grupos-mf",
+    "dev:shell": "cd apps/shell && npm run dev",
+    "dev:consorciados-mf": "cd apps/consorciados-mf && npm run dev",
+    "dev:all": "concurrently \"npm run dev:shell\" \"npm run dev:consorciados-mf\" \"npm run dev:grupos-mf\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.0",
+    "lerna": "^7.0.0"
+  }
+}
 ```
 
 ## 8. Segurança
@@ -895,22 +1299,35 @@ deploy:
 - Compliance completo
 - Locks distribuídos avançados
 
-### 15.4 Fase 4 - Frontend (2 meses)
-- Desenvolvimento do frontend Next.js
+### 15.4 Fase 4 - Microfrontend (3 meses)
+- Desenvolvimento do Shell App (aplicação principal)
+- Criação do Design System compartilhado
+- Desenvolvimento dos microfrontends individuais
+- Configuração do Module Federation
 - Integração com APIs backend
-- Implementação de notificações em tempo real
-- Deploy do frontend em produção
-- Testes de integração frontend-backend
+- Deploy independente dos microfrontends
+- Testes de integração microfrontend-backend
+
+### 15.5 Fase 5 - Otimização e Escalabilidade (1 mês)
+- Otimização de performance dos microfrontends
+- Implementação de lazy loading avançado
+- Cache inteligente entre microfrontends
+- Monitoramento específico para microfrontends
+- CI/CD independente para cada microfrontend
 
 ## 16. Conclusão
 
 Esta arquitetura fornece uma base sólida para o desenvolvimento de um sistema robusto e escalável para administradoras de consórcio, atendendo aos requisitos de compliance, segurança e performance necessários para o domínio financeiro.
 
-A escolha das tecnologias (.NET, Next.js, PostgreSQL, Redis, RabbitMQ, MinIO, gRPC) garante:
+A escolha das tecnologias (.NET, Next.js, PostgreSQL, Redis, RabbitMQ, MinIO, gRPC, Module Federation) garante:
 - **Performance**: Stack otimizada com gRPC para comunicação interna ultra-rápida
-- **Escalabilidade**: Arquitetura de microserviços com locks distribuídos
+- **Escalabilidade**: Arquitetura de microserviços + microfrontend com locks distribuídos
+- **Modularidade**: Microfrontends independentes com deploy separado
+- **Reutilização**: Design System e componentes compartilhados
+- **Desenvolvimento**: Equipes independentes por microfrontend
 - **Segurança**: Compliance com regulamentações e locks para operações críticas
-- **Manutenibilidade**: Código limpo com contratos gRPC bem definidos
-- **Observabilidade**: Monitoramento completo incluindo gRPC e Redis
+- **Manutenibilidade**: Código limpo com contratos gRPC e Module Federation
+- **Observabilidade**: Monitoramento completo incluindo gRPC, Redis e microfrontends
 - **Concorrência**: Locks distribuídos para evitar condições de corrida
 - **Consistência**: Garantia de operações atômicas com Redis locks
+- **Flexibilidade**: Deploy independente de cada microfrontend
