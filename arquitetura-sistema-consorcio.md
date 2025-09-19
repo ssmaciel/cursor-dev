@@ -42,17 +42,19 @@ Sistema completo para gestão de administradoras de consórcio, desenvolvido com
 - **Design System**: Componentes UI compartilhados
 - **Shared State**: Estado global compartilhado entre microfrontends
 
-#### 3.1.2 Estrutura de Microfrontends
+#### 3.1.2 Estrutura Simplificada para 2 Desenvolvedores
 - **Shell App**: Aplicação principal (host)
-- **Consorciados MF**: Microfrontend para gestão de consorciados
-- **Grupos MF**: Microfrontend para gestão de grupos
-- **Financeiro MF**: Microfrontend para módulo financeiro
-- **Sorteios MF**: Microfrontend para sorteios e lances
-- **Relatórios MF**: Microfrontend para relatórios e dashboards
-- **Documentos MF**: Microfrontend para gestão de documentos
-- **Notificações MF**: Microfrontend para centro de notificações
+- **Gestão MF**: Microfrontend unificado para Consorciados + Grupos
+- **Financeiro MF**: Microfrontend para módulo financeiro + Relatórios
+- **Operações MF**: Microfrontend para Sorteios + Documentos + Notificações
 
-#### 3.1.3 Funcionalidades por Microfrontend
+**Justificativa**: Com apenas 2 desenvolvedores, reduzimos de 7 para 3 microfrontends para:
+- **Menor complexidade** de gerenciamento
+- **Desenvolvimento mais ágil** com menos context switching
+- **Deploy simplificado** com menos aplicações
+- **Manutenção mais fácil** com menos pontos de falha
+
+#### 3.1.3 Funcionalidades por Microfrontend (Simplificado)
 
 ##### Shell App (Host)
 - **Navegação principal**: Menu e roteamento
@@ -60,48 +62,34 @@ Sistema completo para gestão de administradoras de consórcio, desenvolvido com
 - **Autenticação**: Login e controle de acesso
 - **Loading states**: Estados de carregamento
 - **Error boundaries**: Tratamento de erros
+- **Dashboard geral**: Visão consolidada do sistema
 
-##### Consorciados MF
+##### Gestão MF (Consorciados + Grupos)
 - **CRUD de consorciados**: Cadastro, edição, exclusão
-- **Listagem e filtros**: Busca e paginação
-- **Validação de dados**: Formulários com validação
-- **Histórico**: Participações e movimentações
-
-##### Grupos MF
-- **Gestão de grupos**: Criação e configuração
+- **Listagem e filtros**: Busca e paginação de consorciados
+- **Gestão de grupos**: Criação e configuração de grupos
 - **Cronogramas**: Definição de pagamentos
 - **Vagas**: Controle de participantes
-- **Regras**: Configuração de regras do grupo
+- **Histórico**: Participações e movimentações
+- **Validação de dados**: Formulários com validação
 
-##### Financeiro MF
+##### Financeiro MF (Financeiro + Relatórios)
 - **Mensalidades**: Controle de pagamentos
 - **Inadimplência**: Gestão de atrasos
-- **Relatórios financeiros**: Dashboards específicos
+- **Dashboards financeiros**: Gráficos e métricas
+- **Relatórios**: Exportação PDF, Excel, CSV
 - **Integração bancária**: APIs de pagamento
-
-##### Sorteios MF
-- **Execução de sorteios**: Interface para sorteios
-- **Gestão de lances**: Processamento de lances
-- **Contemplações**: Processo de contemplação
-- **Auditoria**: Logs de sorteios
-
-##### Relatórios MF
-- **Dashboards**: Gráficos e métricas
-- **Exportação**: PDF, Excel, CSV
 - **Filtros avançados**: Consultas complexas
 - **Agendamento**: Relatórios automáticos
 
-##### Documentos MF
+##### Operações MF (Sorteios + Documentos + Notificações)
+- **Execução de sorteios**: Interface para sorteios
+- **Gestão de lances**: Processamento de lances
+- **Contemplações**: Processo de contemplação
 - **Upload/Download**: Gestão de arquivos
-- **Versionamento**: Controle de versões
-- **Assinatura digital**: Integração com certificados
-- **Compliance**: Auditoria de documentos
-
-##### Notificações MF
 - **Centro de notificações**: Lista de notificações
-- **Configurações**: Preferências do usuário
 - **Templates**: Criação de templates
-- **Histórico**: Log de envios
+- **Auditoria**: Logs de sorteios e documentos
 
 #### 3.1.4 Arquitetura de Microfrontend
 
@@ -127,22 +115,29 @@ apps/shell/
 └── package.json
 ```
 
-##### Microfrontend Individual
+##### Microfrontend Individual (Simplificado)
 ```typescript
-// Estrutura de um microfrontend (ex: consorciados)
-apps/consorciados-mf/
+// Estrutura de um microfrontend (ex: gestao-mf)
+apps/gestao-mf/
 ├── src/
 │   ├── app/                    // App Router
-│   │   ├── page.tsx           // Página principal
-│   │   ├── [id]/              // Páginas dinâmicas
+│   │   ├── consorciados/      // Módulo Consorciados
+│   │   │   ├── page.tsx       // Lista de consorciados
+│   │   │   ├── [id]/          // Detalhes/Edição
+│   │   │   └── novo/          // Cadastro
+│   │   ├── grupos/            // Módulo Grupos
+│   │   │   ├── page.tsx       // Lista de grupos
+│   │   │   ├── [id]/          // Detalhes/Edição
+│   │   │   └── novo/          // Criação
 │   │   └── loading.tsx        // Loading states
 │   ├── components/            // Componentes específicos
-│   │   ├── forms/            // Formulários
-│   │   ├── tables/           // Tabelas
-│   │   └── modals/           // Modais
-│   ├── hooks/                // Hooks específicos
-│   ├── lib/                  // Lógica de negócio
-│   └── types/                // Tipos específicos
+│   │   ├── consorciados/      // Componentes de consorciados
+│   │   ├── grupos/            // Componentes de grupos
+│   │   ├── shared/            // Componentes compartilhados internos
+│   │   └── forms/             // Formulários
+│   ├── hooks/                 // Hooks específicos
+│   ├── lib/                   // Lógica de negócio
+│   └── types/                 // Tipos específicos
 ├── next.config.js            // Configuração MF
 └── package.json
 ```
@@ -177,13 +172,9 @@ module.exports = {
       new NextFederationPlugin({
         name: 'shell',
         remotes: {
-          consorciados: 'consorciados@http://localhost:3001/_next/static/chunks/remoteEntry.js',
-          grupos: 'grupos@http://localhost:3002/_next/static/chunks/remoteEntry.js',
-          financeiro: 'financeiro@http://localhost:3003/_next/static/chunks/remoteEntry.js',
-          sorteios: 'sorteios@http://localhost:3004/_next/static/chunks/remoteEntry.js',
-          relatorios: 'relatorios@http://localhost:3005/_next/static/chunks/remoteEntry.js',
-          documentos: 'documentos@http://localhost:3006/_next/static/chunks/remoteEntry.js',
-          notificacoes: 'notificacoes@http://localhost:3007/_next/static/chunks/remoteEntry.js',
+          gestao: 'gestao@http://localhost:3001/_next/static/chunks/remoteEntry.js',
+          financeiro: 'financeiro@http://localhost:3002/_next/static/chunks/remoteEntry.js',
+          operacoes: 'operacoes@http://localhost:3003/_next/static/chunks/remoteEntry.js',
         },
         shared: {
           react: { singleton: true },
@@ -207,12 +198,15 @@ module.exports = {
   webpack(config, options) {
     config.plugins.push(
       new NextFederationPlugin({
-        name: 'consorciados',
+        name: 'gestao',
         filename: 'static/chunks/remoteEntry.js',
         exposes: {
-          './ConsorciadosPage': './src/app/page.tsx',
-          './ConsorciadosForm': './src/components/forms/ConsorciadosForm.tsx',
-          './ConsorciadosTable': './src/components/tables/ConsorciadosTable.tsx',
+          './ConsorciadosPage': './src/app/consorciados/page.tsx',
+          './ConsorciadosForm': './src/components/consorciados/ConsorciadosForm.tsx',
+          './ConsorciadosTable': './src/components/consorciados/ConsorciadosTable.tsx',
+          './GruposPage': './src/app/grupos/page.tsx',
+          './GruposForm': './src/components/grupos/GruposForm.tsx',
+          './GruposTable': './src/components/grupos/GruposTable.tsx',
         },
         shared: {
           react: { singleton: true },
@@ -336,7 +330,7 @@ const DynamicMicrofrontend = ({
 export default DynamicMicrofrontend;
 ```
 
-##### Uso no Shell App
+##### Uso no Shell App (Simplificado)
 ```typescript
 // apps/shell/src/app/consorciados/page.tsx
 import DynamicMicrofrontend from '@/components/DynamicMicrofrontend';
@@ -344,8 +338,28 @@ import DynamicMicrofrontend from '@/components/DynamicMicrofrontend';
 export default function ConsorciadosPage() {
   return (
     <DynamicMicrofrontend
-      microfrontend="consorciados"
+      microfrontend="gestao"
       component="./ConsorciadosPage"
+    />
+  );
+}
+
+// apps/shell/src/app/grupos/page.tsx
+export default function GruposPage() {
+  return (
+    <DynamicMicrofrontend
+      microfrontend="gestao"
+      component="./GruposPage"
+    />
+  );
+}
+
+// apps/shell/src/app/financeiro/page.tsx
+export default function FinanceiroPage() {
+  return (
+    <DynamicMicrofrontend
+      microfrontend="financeiro"
+      component="./FinanceiroPage"
     />
   );
 }
@@ -812,23 +826,23 @@ spec:
   type: ClusterIP
 ```
 
-#### 7.2.2 Microfrontend Individual
+#### 7.2.2 Microfrontends Simplificados
 ```yaml
-# Deployment do Microfrontend Consorciados
+# Deployment do Microfrontend Gestão
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: consorcio-consorciados-mf
+  name: consorcio-gestao-mf
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: consorcio-consorciados-mf
+      app: consorcio-gestao-mf
   template:
     spec:
       containers:
-      - name: consorciados-mf
-        image: consorcio/consorciados-mf:latest
+      - name: gestao-mf
+        image: consorcio/gestao-mf:latest
         ports:
         - containerPort: 3001
         env:
@@ -840,13 +854,48 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: consorcio-consorciados-mf
+  name: consorcio-gestao-mf
 spec:
   selector:
-    app: consorcio-consorciados-mf
+    app: consorcio-gestao-mf
   ports:
   - port: 3001
     targetPort: 3001
+  type: ClusterIP
+---
+# Deployment do Microfrontend Financeiro
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consorcio-financeiro-mf
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: consorcio-financeiro-mf
+  template:
+    spec:
+      containers:
+      - name: financeiro-mf
+        image: consorcio/financeiro-mf:latest
+        ports:
+        - containerPort: 3002
+        env:
+        - name: NEXT_PUBLIC_API_URL
+          value: "https://api.consorcio.com"
+        - name: NODE_ENV
+          value: "production"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consorcio-financeiro-mf
+spec:
+  selector:
+    app: consorcio-financeiro-mf
+  ports:
+  - port: 3002
+    targetPort: 3002
   type: ClusterIP
 ```
 
@@ -871,26 +920,36 @@ spec:
             name: consorcio-shell
             port:
               number: 3000
-  - host: consorciados.consorcio.com
+  - host: gestao.consorcio.com
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: consorcio-consorciados-mf
+            name: consorcio-gestao-mf
             port:
               number: 3001
-  - host: grupos.consorcio.com
+  - host: financeiro.consorcio.com
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: consorcio-grupos-mf
+            name: consorcio-financeiro-mf
             port:
               number: 3002
+  - host: operacoes.consorcio.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: consorcio-operacoes-mf
+            port:
+              number: 3003
 ```
 
 ### 7.3 Build e Otimização
@@ -1003,12 +1062,16 @@ CMD ["node", "server.js"]
   ],
   "scripts": {
     "build:shell": "cd apps/shell && npm run build",
-    "build:consorciados-mf": "cd apps/consorciados-mf && npm run build",
-    "build:grupos-mf": "cd apps/grupos-mf && npm run build",
-    "build:all": "npm run build:shell && npm run build:consorciados-mf && npm run build:grupos-mf",
+    "build:gestao-mf": "cd apps/gestao-mf && npm run build",
+    "build:financeiro-mf": "cd apps/financeiro-mf && npm run build",
+    "build:operacoes-mf": "cd apps/operacoes-mf && npm run build",
+    "build:all": "npm run build:shell && npm run build:gestao-mf && npm run build:financeiro-mf && npm run build:operacoes-mf",
     "dev:shell": "cd apps/shell && npm run dev",
-    "dev:consorciados-mf": "cd apps/consorciados-mf && npm run dev",
-    "dev:all": "concurrently \"npm run dev:shell\" \"npm run dev:consorciados-mf\" \"npm run dev:grupos-mf\""
+    "dev:gestao-mf": "cd apps/gestao-mf && npm run dev",
+    "dev:financeiro-mf": "cd apps/financeiro-mf && npm run dev",
+    "dev:operacoes-mf": "cd apps/operacoes-mf && npm run dev",
+    "dev:all": "concurrently \"npm run dev:shell\" \"npm run dev:gestao-mf\" \"npm run dev:financeiro-mf\" \"npm run dev:operacoes-mf\"",
+    "dev:minimal": "concurrently \"npm run dev:shell\" \"npm run dev:gestao-mf\""
   },
   "devDependencies": {
     "concurrently": "^8.2.0",
@@ -1299,21 +1362,44 @@ deploy:
 - Compliance completo
 - Locks distribuídos avançados
 
-### 15.4 Fase 4 - Microfrontend (3 meses)
+### 15.4 Fase 4 - Microfrontend Simplificado (2 meses)
 - Desenvolvimento do Shell App (aplicação principal)
 - Criação do Design System compartilhado
-- Desenvolvimento dos microfrontends individuais
+- Desenvolvimento do Gestão MF (Consorciados + Grupos)
+- Desenvolvimento do Financeiro MF (Financeiro + Relatórios)
 - Configuração do Module Federation
 - Integração com APIs backend
-- Deploy independente dos microfrontends
-- Testes de integração microfrontend-backend
+- Deploy dos microfrontends
 
-### 15.5 Fase 5 - Otimização e Escalabilidade (1 mês)
+### 15.5 Fase 5 - Operações e Otimização (1 mês)
+- Desenvolvimento do Operações MF (Sorteios + Documentos + Notificações)
 - Otimização de performance dos microfrontends
-- Implementação de lazy loading avançado
-- Cache inteligente entre microfrontends
+- Implementação de lazy loading
 - Monitoramento específico para microfrontends
-- CI/CD independente para cada microfrontend
+- CI/CD simplificado
+
+### 15.6 Estratégia de Desenvolvimento para 2 Desenvolvedores
+
+#### Desenvolvedor 1 - Backend + Shell App
+- **Responsabilidades**:
+  - Desenvolvimento completo do backend (.NET + gRPC)
+  - Configuração do Shell App
+  - Design System compartilhado
+  - Infraestrutura e deploy
+  - Integração entre frontend e backend
+
+#### Desenvolvedor 2 - Frontend + Microfrontends
+- **Responsabilidades**:
+  - Desenvolvimento dos 3 microfrontends
+  - Componentes de UI específicos
+  - Integração com APIs
+  - Testes de integração frontend
+  - Otimização de performance
+
+#### Cronograma Semanal
+- **Segunda/Quarta/Sexta**: Desenvolvimento individual
+- **Terça/Quinta**: Pair programming para integração
+- **Sexta**: Review e deploy de features
 
 ## 16. Conclusão
 
@@ -1321,13 +1407,14 @@ Esta arquitetura fornece uma base sólida para o desenvolvimento de um sistema r
 
 A escolha das tecnologias (.NET, Next.js, PostgreSQL, Redis, RabbitMQ, MinIO, gRPC, Module Federation) garante:
 - **Performance**: Stack otimizada com gRPC para comunicação interna ultra-rápida
-- **Escalabilidade**: Arquitetura de microserviços + microfrontend com locks distribuídos
-- **Modularidade**: Microfrontends independentes com deploy separado
+- **Escalabilidade**: Arquitetura de microserviços + microfrontend simplificado com locks distribuídos
+- **Modularidade**: 3 microfrontends otimizados para equipe de 2 desenvolvedores
 - **Reutilização**: Design System e componentes compartilhados
-- **Desenvolvimento**: Equipes independentes por microfrontend
+- **Desenvolvimento Ágil**: Divisão clara de responsabilidades entre os 2 desenvolvedores
 - **Segurança**: Compliance com regulamentações e locks para operações críticas
 - **Manutenibilidade**: Código limpo com contratos gRPC e Module Federation
 - **Observabilidade**: Monitoramento completo incluindo gRPC, Redis e microfrontends
 - **Concorrência**: Locks distribuídos para evitar condições de corrida
 - **Consistência**: Garantia de operações atômicas com Redis locks
 - **Flexibilidade**: Deploy independente de cada microfrontend
+- **Produtividade**: Arquitetura simplificada para máxima eficiência da equipe pequena
