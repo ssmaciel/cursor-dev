@@ -1,0 +1,544 @@
+@startuml Arquitetura Geral do Sistema
+!theme plain
+title Arquitetura Geral - Sistema Personal Trainer
+
+package "Frontend" {
+  [Web App\nNext.js] as WebApp
+  [Mobile App\nFlutter] as MobileApp
+}
+
+package "API Gateway" {
+  [NGINX\nLoad Balancer] as Gateway
+}
+
+package "Microservices" {
+  [User Service\n.NET 8] as UserService
+  [Training Service\n.NET 8] as TrainingService
+  [Nutrition Service\n.NET 8] as NutritionService
+  [Communication Service\n.NET 8] as CommService
+  [Payment Service\n.NET 8] as PaymentService
+  [Notification Service\n.NET 8] as NotificationService
+}
+
+package "Message Broker" {
+  [RabbitMQ] as RabbitMQ
+}
+
+package "Cache Layer" {
+  [Redis] as Redis
+}
+
+package "Database" {
+  [PostgreSQL\nPrimary DB] as PostgreSQL
+  [TimescaleDB\nTime Series] as TimescaleDB
+}
+
+package "External Services" {
+  [Stripe\nPayments] as Stripe
+  [Firebase\nNotifications] as Firebase
+  [SendGrid\nEmail] as SendGrid
+}
+
+WebApp --> Gateway
+MobileApp --> Gateway
+
+Gateway --> UserService
+Gateway --> TrainingService
+Gateway --> NutritionService
+Gateway --> CommService
+Gateway --> PaymentService
+Gateway --> NotificationService
+
+UserService --> RabbitMQ
+TrainingService --> RabbitMQ
+NutritionService --> RabbitMQ
+CommService --> RabbitMQ
+PaymentService --> RabbitMQ
+NotificationService --> RabbitMQ
+
+UserService --> Redis
+TrainingService --> Redis
+NutritionService --> Redis
+
+UserService --> PostgreSQL
+TrainingService --> PostgreSQL
+NutritionService --> PostgreSQL
+PaymentService --> PostgreSQL
+
+TrainingService --> TimescaleDB
+
+PaymentService --> Stripe
+NotificationService --> Firebase
+NotificationService --> SendGrid
+
+@enduml
+
+@startuml Diagrama de Microserviços
+!theme plain
+title Arquitetura de Microserviços
+
+package "User Service" {
+  [Auth Controller] as AuthCtrl
+  [User Controller] as UserCtrl
+  [JWT Service] as JWT
+  [User Repository] as UserRepo
+  [PostgreSQL] as UserDB
+}
+
+package "Training Service" {
+  [Training Controller] as TrainCtrl
+  [Exercise Controller] as ExCtrl
+  [Training Repository] as TrainRepo
+  [PostgreSQL] as TrainDB
+}
+
+package "Nutrition Service" {
+  [Food Controller] as FoodCtrl
+  [Meal Plan Controller] as MealCtrl
+  [Nutrition Calculator] as NutCalc
+  [Food Repository] as FoodRepo
+  [PostgreSQL] as NutDB
+}
+
+package "Communication Service" {
+  [Message Controller] as MsgCtrl
+  [SignalR Hub] as Hub
+  [Message Repository] as MsgRepo
+  [PostgreSQL] as MsgDB
+}
+
+package "Payment Service" {
+  [Payment Controller] as PayCtrl
+  [Subscription Controller] as SubCtrl
+  [Stripe Service] as StripeSvc
+  [Payment Repository] as PayRepo
+  [PostgreSQL] as PayDB
+}
+
+package "Notification Service" {
+  [Notification Controller] as NotifCtrl
+  [Push Service] as PushSvc
+  [Email Service] as EmailSvc
+  [Notification Repository] as NotifRepo
+  [PostgreSQL] as NotifDB
+}
+
+package "Message Broker" {
+  [RabbitMQ] as MQ
+}
+
+package "Cache" {
+  [Redis] as Cache
+}
+
+AuthCtrl --> JWT
+AuthCtrl --> UserRepo
+UserCtrl --> UserRepo
+UserRepo --> UserDB
+
+TrainCtrl --> TrainRepo
+ExCtrl --> TrainRepo
+TrainRepo --> TrainDB
+
+FoodCtrl --> FoodRepo
+MealCtrl --> NutCalc
+NutCalc --> FoodRepo
+FoodRepo --> NutDB
+
+MsgCtrl --> MsgRepo
+Hub --> MsgRepo
+MsgRepo --> MsgDB
+
+PayCtrl --> StripeSvc
+PayCtrl --> PayRepo
+SubCtrl --> PayRepo
+PayRepo --> PayDB
+
+NotifCtrl --> PushSvc
+NotifCtrl --> EmailSvc
+NotifCtrl --> NotifRepo
+NotifRepo --> NotifDB
+
+UserService --> MQ
+TrainingService --> MQ
+NutritionService --> MQ
+CommService --> MQ
+PaymentService --> MQ
+NotificationService --> MQ
+
+UserService --> Cache
+TrainingService --> Cache
+NutritionService --> Cache
+
+@enduml
+
+@startuml Modelo de Dados
+!theme plain
+title Modelo de Dados - Sistema Personal Trainer
+
+entity Users {
+  * id : UUID
+  --
+  * email : VARCHAR(255)
+  * password_hash : VARCHAR(255)
+  * first_name : VARCHAR(100)
+  * last_name : VARCHAR(100)
+  * user_type : ENUM
+  phone : VARCHAR(20)
+  birth_date : DATE
+  gender : ENUM
+  profile_image_url : TEXT
+  is_verified : BOOLEAN
+  is_active : BOOLEAN
+  subscription_plan : ENUM
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity Trainers {
+  * id : UUID
+  --
+  * user_id : UUID
+  bio : TEXT
+  specialties : TEXT[]
+  certifications : JSONB
+  experience_years : INTEGER
+  hourly_rate : DECIMAL(10,2)
+  max_clients : INTEGER
+  current_clients_count : INTEGER
+  rating : DECIMAL(3,2)
+  total_reviews : INTEGER
+  is_featured : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity Clients {
+  * id : UUID
+  --
+  * user_id : UUID
+  trainer_id : UUID
+  height_cm : INTEGER
+  weight_kg : DECIMAL(5,2)
+  activity_level : ENUM
+  fitness_goals : TEXT[]
+  medical_conditions : TEXT[]
+  dietary_restrictions : TEXT[]
+  emergency_contact : JSONB
+  subscription_status : ENUM
+  subscription_start_date : DATE
+  subscription_end_date : DATE
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity Trainings {
+  * id : UUID
+  --
+  * trainer_id : UUID
+  * client_id : UUID
+  * name : VARCHAR(200)
+  description : TEXT
+  difficulty_level : ENUM
+  estimated_duration_minutes : INTEGER
+  target_muscle_groups : TEXT[]
+  is_active : BOOLEAN
+  scheduled_date : DATE
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity Exercises {
+  * id : UUID
+  --
+  * training_id : UUID
+  * name : VARCHAR(200)
+  description : TEXT
+  muscle_groups : TEXT[]
+  equipment_needed : TEXT[]
+  video_url : TEXT
+  image_url : TEXT
+  instructions : TEXT[]
+  tips : TEXT[]
+  order_index : INTEGER
+  created_at : TIMESTAMP
+}
+
+entity ExerciseSets {
+  * id : UUID
+  --
+  * exercise_id : UUID
+  * sets : INTEGER
+  repetitions : INTEGER
+  weight_kg : DECIMAL(5,2)
+  duration_seconds : INTEGER
+  rest_seconds : INTEGER
+  distance_meters : DECIMAL(8,2)
+  notes : TEXT
+  created_at : TIMESTAMP
+}
+
+entity Foods {
+  * id : UUID
+  --
+  * name : VARCHAR(200)
+  brand : VARCHAR(100)
+  category : ENUM
+  * serving_size : DECIMAL(8,2)
+  * serving_unit : VARCHAR(50)
+  * calories_per_serving : DECIMAL(8,2)
+  * protein_g : DECIMAL(8,2)
+  * carbs_g : DECIMAL(8,2)
+  * fat_g : DECIMAL(8,2)
+  fiber_g : DECIMAL(8,2)
+  sugar_g : DECIMAL(8,2)
+  sodium_mg : DECIMAL(8,2)
+  is_verified : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity MealPlans {
+  * id : UUID
+  --
+  * trainer_id : UUID
+  * client_id : UUID
+  * name : VARCHAR(200)
+  description : TEXT
+  total_calories : DECIMAL(8,2)
+  total_protein_g : DECIMAL(8,2)
+  total_carbs_g : DECIMAL(8,2)
+  total_fat_g : DECIMAL(8,2)
+  * start_date : DATE
+  end_date : DATE
+  is_active : BOOLEAN
+  created_at : TIMESTAMP
+  updated_at : TIMESTAMP
+}
+
+entity Meals {
+  * id : UUID
+  --
+  * meal_plan_id : UUID
+  * meal_type : ENUM
+  * name : VARCHAR(200)
+  scheduled_time : TIME
+  order_index : INTEGER
+  created_at : TIMESTAMP
+}
+
+entity MealItems {
+  * id : UUID
+  --
+  * meal_id : UUID
+  * food_id : UUID
+  * quantity : DECIMAL(8,2)
+  * unit : VARCHAR(50)
+  created_at : TIMESTAMP
+}
+
+Users ||--o{ Trainers : "user_id"
+Users ||--o{ Clients : "user_id"
+Trainers ||--o{ Clients : "trainer_id"
+Trainers ||--o{ Trainings : "trainer_id"
+Clients ||--o{ Trainings : "client_id"
+Trainings ||--o{ Exercises : "training_id"
+Exercises ||--o{ ExerciseSets : "exercise_id"
+Trainers ||--o{ MealPlans : "trainer_id"
+Clients ||--o{ MealPlans : "client_id"
+MealPlans ||--o{ Meals : "meal_plan_id"
+Meals ||--o{ MealItems : "meal_id"
+Foods ||--o{ MealItems : "food_id"
+
+@enduml
+
+@startuml Fluxo de Mensageria
+!theme plain
+title Fluxo de Mensageria - RabbitMQ
+
+participant "Training Service" as TS
+participant "RabbitMQ" as MQ
+participant "Notification Service" as NS
+participant "Analytics Service" as AS
+participant "Cache Service" as CS
+
+TS -> MQ : TrainingCreatedEvent
+note right : training.created.queue
+
+MQ -> NS : TrainingCreatedEvent
+NS -> NS : Send Push Notification
+NS -> NS : Send Email Notification
+
+MQ -> AS : TrainingCreatedEvent
+AS -> AS : Update Analytics
+AS -> AS : Generate Reports
+
+MQ -> CS : TrainingUpdatedEvent
+CS -> CS : Invalidate Cache
+CS -> CS : Update Cache Keys
+
+@enduml
+
+@startuml Sequência de Criação de Treino
+!theme plain
+title Sequência - Criação de Treino
+
+actor "Personal Trainer" as PT
+participant "Web App" as WA
+participant "API Gateway" as GW
+participant "Training Service" as TS
+participant "Database" as DB
+participant "RabbitMQ" as MQ
+participant "Notification Service" as NS
+participant "Mobile App" as MA
+
+PT -> WA : Create Training
+WA -> GW : POST /api/trainings
+GW -> TS : CreateTrainingCommand
+
+TS -> DB : Save Training
+DB -> TS : Training Created
+TS -> MQ : TrainingCreatedEvent
+
+TS -> GW : TrainingDto
+GW -> WA : Training Response
+WA -> PT : Training Created
+
+MQ -> NS : TrainingCreatedEvent
+NS -> MA : Push Notification
+note right : "New training available!"
+
+@enduml
+
+@startuml Deployment Architecture
+!theme plain
+title Arquitetura de Deployment
+
+package "Load Balancer" {
+  [NGINX] as LB
+}
+
+package "Kubernetes Cluster" {
+  package "Web Tier" {
+    [Web App Pod 1] as WA1
+    [Web App Pod 2] as WA2
+    [Web App Pod 3] as WA3
+  }
+  
+  package "API Tier" {
+    [User Service Pods] as US
+    [Training Service Pods] as TS
+    [Nutrition Service Pods] as NS
+    [Communication Service Pods] as CS
+    [Payment Service Pods] as PS
+    [Notification Service Pods] as NTS
+  }
+}
+
+package "Data Tier" {
+  [PostgreSQL Primary] as PG1
+  [PostgreSQL Replica] as PG2
+  [Redis Cluster] as Redis
+  [RabbitMQ Cluster] as MQ
+}
+
+package "External Services" {
+  [Stripe API] as Stripe
+  [Firebase] as Firebase
+  [SendGrid] as SG
+}
+
+package "Monitoring" {
+  [Prometheus] as Prom
+  [Grafana] as Graf
+  [ELK Stack] as ELK
+}
+
+LB --> WA1
+LB --> WA2
+LB --> WA3
+
+WA1 --> US
+WA2 --> TS
+WA3 --> NS
+
+US --> PG1
+TS --> PG1
+NS --> PG1
+CS --> PG1
+PS --> PG1
+NTS --> PG1
+
+PG1 --> PG2
+
+US --> Redis
+TS --> Redis
+NS --> Redis
+
+US --> MQ
+TS --> MQ
+NS --> MQ
+CS --> MQ
+PS --> MQ
+NTS --> MQ
+
+PS --> Stripe
+NTS --> Firebase
+NTS --> SG
+
+US --> Prom
+TS --> Prom
+NS --> Prom
+Prom --> Graf
+
+@enduml
+
+@startuml Security Architecture
+!theme plain
+title Arquitetura de Segurança
+
+package "Client Layer" {
+  [Web Browser] as WB
+  [Mobile App] as MA
+}
+
+package "Security Layer" {
+  [API Gateway\nwith Rate Limiting] as GW
+  [JWT Token\nValidation] as JWT
+  [SSL/TLS\nTermination] as SSL
+}
+
+package "Application Layer" {
+  [Authentication\nService] as Auth
+  [Authorization\nPolicies] as Authz
+  [Encryption\nService] as Enc
+}
+
+package "Data Layer" {
+  [Encrypted\nDatabase] as DB
+  [Secure\nKey Management] as KM
+}
+
+WB --> SSL
+MA --> SSL
+
+SSL --> GW
+GW --> JWT
+JWT --> Auth
+
+Auth --> Authz
+Authz --> Enc
+Enc --> DB
+
+Enc --> KM
+DB --> KM
+
+note right of GW : Rate Limiting\nRequest Validation\nCORS Protection
+
+note right of Auth : JWT Generation\nToken Refresh\nUser Validation
+
+note right of Authz : Role-based Access\nResource Ownership\nPolicy Enforcement
+
+note right of Enc : Data Encryption\nPassword Hashing\nSensitive Data Protection
+
+@enduml
