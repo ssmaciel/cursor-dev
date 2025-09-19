@@ -45,16 +45,18 @@ Sistema completo para gestão de administradoras de consórcio, desenvolvido com
 
 #### 3.1.2 Estrutura Simplificada para 2 Desenvolvedores
 - **Shell App**: Aplicação principal administrativa (host)
+- **Dashboard Executivo**: Aplicação web exclusiva para gestores
 - **Portal Consorciado**: Aplicação web para consorciados
 - **App Mobile**: Aplicativo mobile para consorciados
 - **Gestão MF**: Microfrontend unificado para Consorciados + Grupos
 - **Financeiro MF**: Microfrontend para módulo financeiro + Relatórios
 - **Operações MF**: Microfrontend para Sorteios + Documentos + Notificações
 
-**Justificativa**: Com apenas 2 desenvolvedores, temos 3 aplicações principais + 3 microfrontends:
+**Justificativa**: Com apenas 2 desenvolvedores, temos 4 aplicações principais + 3 microfrontends:
+- **Dashboard Executivo**: Interface estratégica para gestores (BI/Analytics)
 - **Portal Consorciado**: Interface completa para consorciados
 - **App Mobile**: Aplicativo nativo para consorciados
-- **Shell App**: Interface administrativa
+- **Shell App**: Interface administrativa operacional
 - **3 Microfrontends**: Para funcionalidades administrativas
 - **Menor complexidade** de gerenciamento
 - **Desenvolvimento mais ágil** com menos context switching
@@ -125,6 +127,28 @@ Sistema completo para gestão de administradoras de consórcio, desenvolvido com
 - **Offline**: Funcionalidades básicas offline
 - **Biometria**: Autenticação por impressão digital
 - **QR Code**: Pagamento via QR Code
+
+##### Dashboard Executivo (Gestores)
+- **Login executivo**: Autenticação de alto nível
+- **Dashboard estratégico**: Visão geral do negócio
+- **KPIs principais**: Indicadores de performance
+- **Análise de receita**: Gráficos de receita e lucratividade
+- **Análise de inadimplência**: Métricas de atraso
+- **Performance de grupos**: Análise por grupo de consórcio
+- **Análise de lances**: Comportamento de lances
+- **Projeções financeiras**: Previsões e cenários
+- **Análise de mercado**: Comparação com concorrentes
+- **Relatórios executivos**: Relatórios para diretoria
+- **Alertas estratégicos**: Notificações de alto nível
+- **Análise de risco**: Avaliação de riscos
+- **Benchmarking**: Comparação com metas
+- **Análise de sazonalidade**: Padrões temporais
+- **Análise de geografia**: Performance por região
+- **Análise de produtos**: Performance por tipo de consórcio
+- **Análise de clientes**: Segmentação de consorciados
+- **Análise de vendas**: Performance comercial
+- **Análise operacional**: Eficiência operacional
+- **Análise de compliance**: Indicadores regulatórios
 
 #### 3.1.4 Arquitetura de Microfrontend
 
@@ -538,6 +562,27 @@ export default function FinanceiroPage() {
   - Cache local de dados
   - Geolocalização para assembleias
 
+#### 3.2.13 Serviço de Dashboard Executivo
+- **Tecnologia**: .NET 8 + gRPC Server + Next.js + Business Intelligence
+- **Responsabilidades**:
+  - Autenticação executiva de alto nível
+  - Agregação de dados para BI
+  - Cálculo de KPIs e métricas
+  - Geração de relatórios executivos
+  - Análise de tendências e padrões
+  - Projeções financeiras e cenários
+  - Análise de risco e compliance
+  - Benchmarking e comparações
+  - Alertas estratégicos
+  - Análise de sazonalidade
+  - Segmentação de clientes
+  - Análise geográfica
+  - Performance por produto
+  - Análise operacional
+  - Integração com ferramentas de BI
+  - Cache de dados agregados
+  - Processamento de big data
+
 ### 3.3 Serviços de Apoio
 
 #### 3.3.1 Serviço de Auditoria
@@ -748,6 +793,33 @@ export const useNotifications = () => {
 - LogsMobile
 ```
 
+#### 5.2.8 Banco de Dashboard Executivo (Data Warehouse)
+```sql
+-- Tabelas principais
+- KPIsExecutivos
+- MetricasFinanceiras
+- AnaliseReceita
+- AnaliseInadimplencia
+- PerformanceGrupos
+- AnaliseLances
+- ProjecoesFinanceiras
+- AnaliseMercado
+- RelatoriosExecutivos
+- AlertasEstrategicos
+- AnaliseRisco
+- Benchmarking
+- AnaliseSazonalidade
+- AnaliseGeografia
+- AnaliseProdutos
+- SegmentacaoClientes
+- AnaliseVendas
+- AnaliseOperacional
+- AnaliseCompliance
+- AgregacoesDados
+- CacheBI
+- LogsExecutivos
+```
+
 ### 5.3 Redis - Cache e Locks Distribuídos
 
 #### 5.3.1 Estrutura de Cache
@@ -832,6 +904,8 @@ public class DistributedLockService
 - **App Mobile**: Controle de sincronização
 - **Boletos**: Evitar geração duplicada de boletos
 - **Lances Mobile**: Processar lances de forma sequencial
+- **Dashboard Executivo**: Evitar recálculo simultâneo de KPIs
+- **BI**: Controle de processamento de dados agregados
 
 ## 6. Comunicação entre Serviços
 
@@ -851,6 +925,7 @@ public class DistributedLockService
 - **Bacen Service**: Integrações com Bacen e geração de arquivos
 - **Portal Service**: Funcionalidades do portal do consorciado
 - **Mobile Service**: APIs específicas para app mobile
+- **Executive Service**: Dashboard executivo e Business Intelligence
 - **Auditoria Service**: Logging e rastreabilidade
 
 #### 6.2.2 Definições de Serviços gRPC
@@ -919,6 +994,30 @@ service MobileService {
   rpc UploadFoto(FotoRequest) returns (FotoResponse);
   rpc BuscarGeolocalizacao(GeoRequest) returns (GeoResponse);
 }
+
+// ExecutiveService.proto
+service ExecutiveService {
+  rpc AutenticarExecutivo(ExecutivoRequest) returns (AutenticacaoResponse);
+  rpc BuscarKPIs(BuscarKPIsRequest) returns (KPIsResponse);
+  rpc BuscarMetricasFinanceiras(MetricasRequest) returns (MetricasResponse);
+  rpc BuscarAnaliseReceita(ReceitaRequest) returns (ReceitaResponse);
+  rpc BuscarAnaliseInadimplencia(InadimplenciaRequest) returns (InadimplenciaResponse);
+  rpc BuscarPerformanceGrupos(GruposRequest) returns (GruposResponse);
+  rpc BuscarAnaliseLances(LancesRequest) returns (LancesResponse);
+  rpc BuscarProjecoes(ProjecoesRequest) returns (ProjecoesResponse);
+  rpc BuscarAnaliseMercado(MercadoRequest) returns (MercadoResponse);
+  rpc GerarRelatorioExecutivo(RelatorioRequest) returns (RelatorioResponse);
+  rpc BuscarAlertasEstrategicos(AlertasRequest) returns (AlertasResponse);
+  rpc BuscarAnaliseRisco(RiscoRequest) returns (RiscoResponse);
+  rpc BuscarBenchmarking(BenchmarkingRequest) returns (BenchmarkingResponse);
+  rpc BuscarAnaliseSazonalidade(SazonalidadeRequest) returns (SazonalidadeResponse);
+  rpc BuscarAnaliseGeografia(GeografiaRequest) returns (GeografiaResponse);
+  rpc BuscarAnaliseProdutos(ProdutosRequest) returns (ProdutosResponse);
+  rpc BuscarSegmentacaoClientes(ClientesRequest) returns (ClientesResponse);
+  rpc BuscarAnaliseVendas(VendasRequest) returns (VendasResponse);
+  rpc BuscarAnaliseOperacional(OperacionalRequest) returns (OperacionalResponse);
+  rpc BuscarAnaliseCompliance(ComplianceRequest) returns (ComplianceResponse);
+}
 ```
 
 #### 6.2.3 Vantagens do gRPC
@@ -964,6 +1063,7 @@ service MobileService {
 - **bacen.queue**: Eventos de integração Bacen
 - **portal.queue**: Eventos do portal do consorciado
 - **mobile.queue**: Eventos do app mobile
+- **executive.queue**: Eventos do dashboard executivo
 - **notificacao.queue**: Eventos de notificação
 - **auditoria.queue**: Eventos de auditoria
 
@@ -1560,15 +1660,16 @@ deploy:
 - Compliance completo
 - Locks distribuídos avançados
 
-### 15.4 Fase 4 - Portal Consorciado e Microfrontend (2 meses)
+### 15.4 Fase 4 - Portal Consorciado e Dashboard Executivo (2 meses)
 - Desenvolvimento do Shell App (aplicação principal)
 - Desenvolvimento do Portal Consorciado (web)
+- Desenvolvimento do Dashboard Executivo (gestores)
 - Criação do Design System compartilhado
 - Desenvolvimento do Gestão MF (Consorciados + Grupos)
 - Desenvolvimento do Financeiro MF (Financeiro + Relatórios)
 - Configuração do Module Federation
 - Integração com APIs backend
-- Deploy dos microfrontends e portal
+- Deploy dos microfrontends, portal e dashboard executivo
 
 ### 15.5 Fase 5 - App Mobile e Integração Bacen (2 meses)
 - Desenvolvimento do App Mobile (React Native/Flutter)
@@ -1592,19 +1693,21 @@ deploy:
 
 ### 15.7 Estratégia de Desenvolvimento para 2 Desenvolvedores
 
-#### Desenvolvedor 1 - Backend + Shell App + Integração Bacen
+#### Desenvolvedor 1 - Backend + Shell App + Integração Bacen + Dashboard Executivo
 - **Responsabilidades**:
   - Desenvolvimento completo do backend (.NET + gRPC)
   - Serviço de Integração Bacen
   - Serviço de Portal Consorciado
   - Serviço de App Mobile
+  - Serviço de Dashboard Executivo (BI/Analytics)
   - Configuração do Shell App
   - Design System compartilhado
   - Infraestrutura e deploy
   - Integração entre frontend e backend
   - Implementação de todas as integrações com Bacen
+  - Desenvolvimento do Dashboard Executivo (web)
 
-#### Desenvolvedor 2 - Frontend + Portal + App Mobile
+#### Desenvolvedor 2 - Frontend + Portal + App Mobile + Microfrontends
 - **Responsabilidades**:
   - Desenvolvimento dos 3 microfrontends
   - Desenvolvimento do Portal Consorciado (web)
