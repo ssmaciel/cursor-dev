@@ -82,14 +82,16 @@ Sistema completo para gestão de administradoras de consórcio, desenvolvido com
 - **Filtros avançados**: Consultas complexas
 - **Agendamento**: Relatórios automáticos
 
-##### Operações MF (Sorteios + Documentos + Notificações)
+##### Operações MF (Sorteios + Documentos + Notificações + Bacen)
 - **Execução de sorteios**: Interface para sorteios
 - **Gestão de lances**: Processamento de lances
 - **Contemplações**: Processo de contemplação
 - **Upload/Download**: Gestão de arquivos
 - **Centro de notificações**: Lista de notificações
 - **Templates**: Criação de templates
-- **Auditoria**: Logs de sorteios e documentos
+- **Integração Bacen**: Interface para arquivos SAG, CAGED, RAIS
+- **Consultas externas**: CND, SPC, Receita Federal
+- **Auditoria**: Logs de sorteios, documentos e integrações Bacen
 
 #### 3.1.4 Arquitetura de Microfrontend
 
@@ -453,6 +455,26 @@ export default function FinanceiroPage() {
   - Webhooks
   - Processamento assíncrono de notificações
 
+#### 3.2.10 Serviço de Integração Bacen
+- **Tecnologia**: .NET 8 + gRPC Server + File Processing
+- **Responsabilidades**:
+  - Geração de arquivos SAG (Sistema de Administração de Garantias)
+  - Geração de arquivos CAGED (Cadastro Geral de Empregados)
+  - Geração de arquivos RAIS (Relação Anual de Informações Sociais)
+  - Integração com CND (Certidão Negativa de Débitos)
+  - Consulta SPC/Serasa
+  - Integração com Receita Federal
+  - Geração de relatórios de compliance
+  - Processamento de arquivos de movimentação financeira
+  - Integração com SPB (Sistema de Pagamentos Brasileiro)
+  - Geração de arquivos de consorciados
+  - Relatórios de sorteios e contemplações
+  - Arquivos de inadimplência e liquidação
+  - Validação e formatação de arquivos conforme padrões Bacen
+  - Envio automático de arquivos via SFTP/API
+  - Controle de retry e reprocessamento
+  - Auditoria de integrações
+
 ### 3.3 Serviços de Apoio
 
 #### 3.3.1 Serviço de Auditoria
@@ -620,6 +642,19 @@ export const useNotifications = () => {
 - AuditoriaSorteios
 ```
 
+#### 5.2.5 Banco de Integração Bacen
+```sql
+-- Tabelas principais
+- ArquivosBacen
+- IntegracoesBacen
+- LogsIntegracao
+- ConfiguracoesBacen
+- RetryIntegracao
+- ValidacoesBacen
+- TemplatesArquivo
+- HistoricoEnvio
+```
+
 ### 5.3 Redis - Cache e Locks Distribuídos
 
 #### 5.3.1 Estrutura de Cache
@@ -698,6 +733,8 @@ public class DistributedLockService
 - **Pagamentos**: Evitar processamento duplicado de pagamentos
 - **Contemplações**: Garantir processamento único de contemplações
 - **Relatórios**: Evitar geração simultânea de relatórios pesados
+- **Integração Bacen**: Evitar geração simultânea de arquivos Bacen
+- **Envio de Arquivos**: Garantir envio único de arquivos para Bacen
 
 ## 6. Comunicação entre Serviços
 
@@ -714,6 +751,7 @@ public class DistributedLockService
 - **Financeiro Service**: Cálculos financeiros e validações
 - **Grupo Service**: Gestão de grupos e regras
 - **Sorteio Service**: Processamento de sorteios e lances
+- **Bacen Service**: Integrações com Bacen e geração de arquivos
 - **Auditoria Service**: Logging e rastreabilidade
 
 #### 6.2.2 Definições de Serviços gRPC
@@ -742,6 +780,19 @@ service SorteioService {
   rpc ContemplarConsorciado(ContemplarRequest) returns (ContemplacaoResponse);
   rpc AuditorarSorteio(AuditoriaRequest) returns (AuditoriaResponse);
 }
+
+// BacenService.proto
+service BacenService {
+  rpc GerarArquivoSAG(GerarArquivoSAGRequest) returns (ArquivoResponse);
+  rpc GerarArquivoCAGED(GerarArquivoCAGEDRequest) returns (ArquivoResponse);
+  rpc GerarArquivoRAIS(GerarArquivoRAISRequest) returns (ArquivoResponse);
+  rpc ConsultarCND(ConsultarCNDRequest) returns (CNDResponse);
+  rpc ConsultarSPC(ConsultarSPCRequest) returns (SPCResponse);
+  rpc ConsultarReceita(ConsultarReceitaRequest) returns (ReceitaResponse);
+  rpc EnviarArquivoBacen(EnviarArquivoRequest) returns (EnvioResponse);
+  rpc ValidarArquivo(ValidarArquivoRequest) returns (ValidacaoResponse);
+  rpc ReprocessarArquivo(ReprocessarArquivoRequest) returns (ReprocessamentoResponse);
+}
 ```
 
 #### 6.2.3 Vantagens do gRPC
@@ -760,12 +811,19 @@ service SorteioService {
 - ContemplacaoProcessada
 - DocumentoUploadado
 - InadimplenciaDetectada
+- ArquivoBacenGerado
+- ArquivoBacenEnviado
+- IntegracaoBacenFalhou
+- CNDConsultada
+- SPCConsultado
+- ReceitaConsultada
 ```
 
 ### 6.4 Message Queues (RabbitMQ)
 - **consorciado.queue**: Eventos de consorciados
 - **financeiro.queue**: Eventos financeiros
 - **sorteio.queue**: Eventos de sorteios
+- **bacen.queue**: Eventos de integração Bacen
 - **notificacao.queue**: Eventos de notificação
 - **auditoria.queue**: Eventos de auditoria
 
@@ -1371,26 +1429,33 @@ deploy:
 - Integração com APIs backend
 - Deploy dos microfrontends
 
-### 15.5 Fase 5 - Operações e Otimização (1 mês)
-- Desenvolvimento do Operações MF (Sorteios + Documentos + Notificações)
+### 15.5 Fase 5 - Operações e Integração Bacen (2 meses)
+- Desenvolvimento do Operações MF (Sorteios + Documentos + Notificações + Bacen)
+- Implementação do Serviço de Integração Bacen
+- Desenvolvimento de todas as integrações obrigatórias com Bacen
+- Configuração de geração automática de arquivos SAG, CAGED, RAIS
+- Integração com APIs externas (CND, SPC, Receita Federal)
+- Implementação de retry e reprocessamento
+- Testes de integração com Bacen
 - Otimização de performance dos microfrontends
-- Implementação de lazy loading
-- Monitoramento específico para microfrontends
 - CI/CD simplificado
 
 ### 15.6 Estratégia de Desenvolvimento para 2 Desenvolvedores
 
-#### Desenvolvedor 1 - Backend + Shell App
+#### Desenvolvedor 1 - Backend + Shell App + Integração Bacen
 - **Responsabilidades**:
   - Desenvolvimento completo do backend (.NET + gRPC)
+  - Serviço de Integração Bacen
   - Configuração do Shell App
   - Design System compartilhado
   - Infraestrutura e deploy
   - Integração entre frontend e backend
+  - Implementação de todas as integrações com Bacen
 
 #### Desenvolvedor 2 - Frontend + Microfrontends
 - **Responsabilidades**:
   - Desenvolvimento dos 3 microfrontends
+  - Interface de integração Bacen no Operações MF
   - Componentes de UI específicos
   - Integração com APIs
   - Testes de integração frontend
@@ -1418,3 +1483,6 @@ A escolha das tecnologias (.NET, Next.js, PostgreSQL, Redis, RabbitMQ, MinIO, gR
 - **Consistência**: Garantia de operações atômicas com Redis locks
 - **Flexibilidade**: Deploy independente de cada microfrontend
 - **Produtividade**: Arquitetura simplificada para máxima eficiência da equipe pequena
+- **Compliance Bacen**: Integração completa com todas as obrigações do Bacen
+- **Automação**: Geração e envio automático de arquivos para Bacen
+- **Auditoria**: Rastreabilidade completa de todas as integrações
